@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+	<title>Chat</title>
+	<link rel="stylesheet" type="text/css" href="/style.css">
+	<style type="text/css">
+		.center {text-align:center;}
+		.right {text-align: right}
+		.content {width: 100%;border: 1px solid #ccc;overflow-y: auto;margin-bottom: 20px}
+		#messages {background-color: #fff;padding:10px;}
+		li {background-color: #eee;list-style-type: none;text-align: left; padding:5px;}
+		li:nth-child(2n) {background-color: #fff}
+		textarea {margin: 5px;width: 98%}
+		.btn {background-color: green; margin:10px; padding: 10px 15px; display: inline-block; border-radius: 5px; font-weight: bold; cursor:pointer;}		
+	</style>
+</head>
+<body>
+	<h1 class="center">Eco chat</h1>
+	<div class="content center" id="cont">
+		<ul id="messages">
+			<!-- <li>test</li>
+			<li>test2</li>
+			<li>test3</li>
+			<li>test4</li> -->
+		</ul>
+	</div>
+	Nick name: <input id='userName' onchange='saveUserToLS()'></input>
+	<br>
+	<textarea id='msg' col='3' maxlength='78'></textarea>
+	<div class="right">
+		<div class="btn" onclick="sent()">Sent</div>
+	</div>
+	<br>
+	<script type="text/javascript">
+		var cont = document.getElementById("cont");
+		var msg = document.getElementById("msg");
+		var nick =document.getElementById("userName");
+		var list = document.getElementById("messages");
+		var timerId = null;
+		var lastMsgId = 0;
+		cont.style.height = '350px';
+		
+		init();
+
+		function sent(){
+		  if (msg.value && msg.value!='' && nick.value && nick.value!=''){
+			var obj = {'creatorName':nick.value,'content':msg.value};
+			console.log(obj);
+			var query = '/savemsg';
+			var xmlhttp = new XMLHttpRequest();
+			clearTimeout(timerId);
+			xmlhttp.onreadystatechange=function(){
+				if (xmlhttp.readyState==4 && xmlhttp.status==200){
+    				console.log(xmlhttp.responseText);
+    				var obj = JSON.parse(xmlhttp.responseText);
+    				if (obj && obj.id){
+    					var _arr =[];
+    					_arr.push(obj);
+    					addToList(JSON.stringify(_arr));
+    					startTimeout();
+    					msg.value = '';
+    				}
+    			}
+			}
+			xmlhttp.open("POST",query,true);
+			xmlhttp.send(JSON.stringify(obj));
+		  } else {
+		  	alert("Input your name and message please !!!");
+		  }
+
+		}
+		function init(){
+			msg.value = '';
+			nick.value = localStorage.getItem('userName') || 'eco user #';
+			startTimeout();
+		}
+		function saveUserToLS(){
+			var userName = nick.value;
+			localStorage.setItem('userName',userName);
+		}
+		function addToList(msg){
+			console.log(JSON.stringify(msg))
+			_arr = JSON.parse(msg);
+			if(_arr && _arr.length){
+				console.log(_arr);
+				lastMsgId=_arr[_arr.length-1].id;
+				_arr.forEach(function(item){
+					var newLi = document.createElement('li');
+					newLi.innerHTML = "<b>"+item.creatorName+":</b> "+item.content;
+					list.appendChild(newLi);
+				});
+			}
+		}
+		function getMsg(callBack,id){
+			var _id = id || 0;
+			var query = "/getmsg?id="+_id;
+			console.log(query)
+			var xmlhttp = new XMLHttpRequest();
+			xmlhttp.onreadystatechange=function(){
+				if (xmlhttp.readyState==4 && xmlhttp.status==200){
+    				callBack(xmlhttp.responseText);
+    				startTimeout();
+    			}
+			}
+			xmlhttp.open("GET",query,true);
+			xmlhttp.send();
+		}
+		function startTimeout(){
+			timerId = setTimeout(function() {
+				getMsg(addToList,lastMsgId);
+			}, 1000);
+		}
+
+	</script>
+</body>
+</html>
