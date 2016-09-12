@@ -4,11 +4,6 @@ var fs = require("fs");
 var file = "index.html"
 var counter = 0;
 var msg = [];
-msg.push({id:1,creatorName:'Vx',content:'this is test message'});
-msg.push({id:2,creatorName:'Zuko',content:'oop2'});
-msg.push({id:3,creatorName:'I\'m',content:'oops 3'});
-msg.push({id:4,creatorName:'Mx',content:'Four 4'});
-console.log(msg);
 
 function saveMsg(response,request){
   console.log(request.url);
@@ -33,7 +28,11 @@ function getMsg(response,request){
   response.end();
 }
 function getNewId(){
-  return msg[msg.length-1].id+1;
+  if(msg && msg.length){
+    return msg[msg.length-1].id+1;
+  } else {
+    return 1
+  }
 }
 function getMsgFromDB(startId){
   console.log(startId)
@@ -41,7 +40,10 @@ function getMsgFromDB(startId){
   var res = [];
   if (startId==0 || startId>msg.length){
     var limit = 3;
-    for(i=msg.length-limit;i< msg.length && limit>0;i++){
+    if(limit > msg.length){
+      limit = msg.length
+    }
+    for(i=msg.length-limit; limit>0;i++){
       res.push( msg[i] );  
       limit--;
     }
